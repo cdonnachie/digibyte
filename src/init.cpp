@@ -18,6 +18,7 @@
 #include <chainparams.h>
 #include <compat/sanity.h>
 #include <deploymentstatus.h>
+#include <flat-database.h>
 #include <fs.h>
 #include <hash.h>
 #include <httprpc.h>
@@ -41,6 +42,7 @@
 #include <policy/fees.h>
 #include <policy/policy.h>
 #include <policy/settings.h>
+#include <primitives/powcache.h>
 #include <protocol.h>
 #include <rpc/blockchain.h>
 #include <rpc/register.h>
@@ -202,6 +204,11 @@ void Shutdown(NodeContext& node)
     }
     StopMapPort();
 
+    // fRPCInWarmup should be `false` if we completed the loading sequence
+    // before a shutdown request was received
+    std::string statusmessage;
+    bool fRPCInWarmup = RPCIsInWarmup(&statusmessage)
+
     // Because these depend on each-other, we make sure that neither can be
     // using the other before destroying them.
     if (node.peerman) UnregisterValidationInterface(node.peerman.get());
@@ -242,6 +249,11 @@ void Shutdown(NodeContext& node)
     // After there are no more peers/RPC left to give us new data which may generate
     // CValidationInterface callbacks, flush them...
     GetMainSignals().FlushBackgroundCallbacks();
+
+    if (!fRPCInWarmup) {
+        CFlatDB <CPowCache> flatdb7("powcache.dat", "powCache");
+        flatdb7.Dump(CPowCache::Instance());
+    }
 
     // Stop and delete all indexes only after flushing background callbacks.
     if (g_txindex) {
@@ -402,6 +414,8 @@ void SetupServerArgs(ArgsManager& argsman)
         -GetNumCores(), MAX_SCRIPTCHECK_THREADS, DEFAULT_SCRIPTCHECK_THREADS), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-persistmempool", strprintf("Whether to save the mempool on shutdown and load on restart (default: %u)", DEFAULT_PERSIST_MEMPOOL), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-pid=<file>", strprintf("Specify pid file. Relative paths will be prefixed by a net-specific datadir location. (default: %s)", DIGIBYTE_PID_FILENAME), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
+    argsman.AddArg("-powcachesize=<n>", strprintf("Set ProofOfWork cache size in megabytes (default: %d)", DEFAULT_POW_CACHE_SIZE), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
+    argsman.AddArg("-powcachevalidate", strprintf("Whether to validate ProofOfWork cache (default: %u)", DEFAULT_VALIDATE_POW_CACHE), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-prune=<n>", strprintf("Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex, -coinstatsindex and -rescan. "
             "Warning: Reverting this setting requires re-downloading the entire blockchain. "
             "(default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, >=%u = automatically prune block files to stay under the specified target size in MiB)", MIN_DISK_SPACE_FOR_BLOCK_FILES / 1024 / 1024), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
@@ -1564,7 +1578,27 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
         return false;
     }
 
-    // ********************************************************* Step 8: start indexers
+    // ********************************************************* Step 8a: load powcache.dat
+
+    {
+        fs::path pathDB = GetDataDir();
+        std::string strDBName = "powcache.dat";
+
+        LOCK(cs_pow);
+        // Always load the powcache if available:
+        uiInterface.InitMessage(_("Loading POW cache..."));
+        fs::path powCacheFile = pathDB / strDBName;
+        if (!fs::exists(powCacheFile)) {
+            uiInterface.InitMessage("Loading POW cache for the first time. This could take a minute...");
+        }
+
+        CFlatDB <CPowCache> flatdb7(strDBName, "powCache");
+        if (!flatdb7.Load(CPowCache::Instance())) {
+            return InitError(_("Failed to load POW cache from") + "\n" + (pathDB / strDBName).string());
+        }
+    }
+
+    // ********************************************************* Step 8b: start indexers
     if (args.GetBoolArg("-txindex", DEFAULT_TXINDEX)) {
         g_txindex = std::make_unique<TxIndex>(nTxIndexCache, false, fReindex);
         if (!g_txindex->Start(chainman.ActiveChainstate())) {
@@ -1614,6 +1648,10 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
         // The option to not set NODE_WITNESS is only used in the tests and should be removed.
         nLocalServices = ServiceFlags(nLocalServices | NODE_WITNESS);
     }
+
+    // ********************************************************* Step 10a: schedule Digibyte-specific tasks
+    // Periodic flush of POW Cache if cache has grown enough
+    node.scheduler->scheduleEvery(std::bind(&CPowCache::DoMaintenance, &CPowCache::Instance()), 60000);    
 
     // ********************************************************* Step 11: import blocks
 

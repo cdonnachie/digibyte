@@ -127,6 +127,9 @@ public:
 
     uint256 GetPoWAlgoHash(const Consensus::Params& params) const;
 
+    /// Caching lookup/computation of Algo POW hash
+    uint256 GetPOWHash(const Consensus::Params& params, bool readCache = true) const;
+
     int64_t GetBlockTime() const
     {
         return (int64_t)nTime;

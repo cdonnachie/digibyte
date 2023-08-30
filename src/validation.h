@@ -165,6 +165,7 @@ void StopScriptCheckWorkerThreads();
 CTransactionRef GetTransaction(const CBlockIndex* const block_index, const CTxMemPool* const mempool, const uint256& hash, const Consensus::Params& consensusParams, uint256& hashBlock);
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams);
 CAmount GetDGBSubsidy(int nHeight,  const Consensus::Params& consensusParams);
+bool CheckPOW(const CBlock &block, const Consensus::Params &consensusParams);
 
 bool AbortNode(BlockValidationState& state, const std::string& strMessage, const bilingual_str& userMessage = bilingual_str{});
 

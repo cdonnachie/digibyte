@@ -149,6 +149,7 @@ DIGIBYTE_CORE_H = \
   deploymentinfo.h \
   deploymentstatus.h \
   external_signer.h \
+  flat-database.h \
   flatfile.h \
   fs.h \
   httprpc.h \
@@ -241,6 +242,7 @@ DIGIBYTE_CORE_H = \
   txorphanage.h \
   txrequest.h \
   undo.h \
+  unordered_lru_cache.h \
   util/asmap.h \
   util/bip32.h \
   util/bytevectorhash.h \
@@ -548,6 +550,8 @@ libdigibyte_consensus_a_SOURCES = \
   prevector.h \
   primitives/block.cpp \
   primitives/block.h \
+  primitives/powcache.cpp \
+  primitives/powcache.h \  
   primitives/transaction.cpp \
   primitives/transaction.h \
   pubkey.cpp \

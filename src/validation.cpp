@@ -1198,6 +1198,16 @@ CTransactionRef GetTransaction(const CBlockIndex* const block_index, const CTxMe
     return nullptr;
 }
 
+bool CheckPOW(const CBlock &block, const Consensus::Params &consensusParams) {
+    if (!CheckProofOfWork(block.GetPOWHash(consensusParams), block.nBits, consensusParams)) {
+        LogPrintf("CheckPOW: CheckProofOfWork failed for %s, retesting without POW cache\n",
+                  block.GetHash().ToString());
+        // Retest without POW cache in case cache was corrupted:
+        return CheckProofOfWork(block.GetPOWHash(consensusParams, false), block.nBits, consensusParams);
+    }
+    return true;
+}
+
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
     CAmount nSubsidy = COIN;
@@ -3158,7 +3168,7 @@ void CChainState::ReceivedBlockTransactions(const CBlock& block, CBlockIndex* pi
 static bool CheckBlockHeader(const CBlockHeader& block, BlockValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW = true)
 {
     // Check proof of work matches claimed amount
-    if (fCheckPOW && !CheckProofOfWork(GetPoWAlgoHash(block), block.nBits, consensusParams))
+    if (fCheckPOW && !CheckPOW(block, consensusParams))
         return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "high-hash", "proof of work failed");
 
     return true;

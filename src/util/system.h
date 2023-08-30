@@ -39,6 +39,9 @@ class UniValue;
 // Application startup time (used for uptime calculation)
 int64_t GetStartupTime();
 
+static const int64_t DEFAULT_POW_CACHE_SIZE = 1000000;
+static bool DEFAULT_VALIDATE_POW_CACHE = false;
+
 extern const char * const DIGIBYTE_CONF_FILENAME;
 extern const char * const DIGIBYTE_SETTINGS_FILENAME;
 
