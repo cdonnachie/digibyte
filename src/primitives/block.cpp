@@ -40,6 +40,8 @@ int CBlockHeader::GetAlgo() const
             //return ALGO_EQUIHASH;
         //case BLOCK_VERSION_ETHASH:
             //return ALGO_ETHASH;
+        case BLOCK_VERSION_SHA512_256D:
+            return ALGO_SHA512_256D;
         case BLOCK_VERSION_ODO:
             return ALGO_ODO;
     }
@@ -75,6 +77,9 @@ uint256 CBlockHeader::GetPoWAlgoHash(const Consensus::Params& params) const
             //return HashEquihash(BEGIN(nVersion), END(nNonce));
         //case ALGO_ETHASH:
             //return HashEthash(BEGIN(nVersion), END(nNonce));
+        case ALGO_SHA512_256D:
+            uint256 thash = BlockHashCalculator::CalculateBlockHashFromHeader_sha512_256(*this);
+            return thash;        
         case ALGO_ODO:
         {
             uint32_t key = OdoKey(params, nTime);

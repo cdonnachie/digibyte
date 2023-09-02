@@ -14,6 +14,8 @@
 #include <string.h>
 
 #include <compat/endian.h>
+#include "sha512_256v2.h"
+#include "sha512_256.h"
 
 uint16_t static inline ReadLE16(const unsigned char* ptr)
 {

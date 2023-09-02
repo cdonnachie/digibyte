@@ -474,8 +474,11 @@ crypto_libdigibyte_crypto_base_a_SOURCES = \
   crypto/sha512.cpp \
   crypto/sha512.h \
   crypto/siphash.cpp \
-  crypto/siphash.h
-
+  crypto/siphash.h \
+  crypto/sha512_256.cpp \
+  crypto/sha512_256.h \
+	crypto/sha512_256v2.cpp \
+  crypto/sha512_256v2.h 
 
 if USE_ASM
 crypto_libdigibyte_crypto_base_a_SOURCES += crypto/sha256_sse4.cpp

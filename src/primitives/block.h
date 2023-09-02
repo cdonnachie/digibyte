@@ -8,6 +8,7 @@
 #define DIGIBYTE_PRIMITIVES_BLOCK_H
 
 #include <primitives/transaction.h>
+#include <primitives/blockhash.h>
 #include <serialize.h>
 #include <uint256.h>
 
@@ -22,6 +23,7 @@ enum {
     ALGO_QUBIT    = 4,
     //ALGO_EQUIHASH = 5,
     //ALGO_ETHASH   = 6,
+    ALGO_SHA512_256D = 5,
     ALGO_ODO      = 7,
     NUM_ALGOS_IMPL };
 
@@ -40,6 +42,7 @@ enum {
     BLOCK_VERSION_QUBIT          = (8 << 8),
     //BLOCK_VERSION_EQUIHASH       = (10 << 8),
     //BLOCK_VERSION_ETHASH         = (12 << 8),
+    BLOCK_VERSION_SHA512_256D    = (10 << 8),
     BLOCK_VERSION_ODO            = (14 << 8),
 };
 
@@ -211,6 +214,31 @@ struct CBlockLocator
     {
         return vHave.empty();
     }
+};
+
+#define ENABLE_SHA512_256_HEADER_DEBUG false
+
+/** Calculate sha512/256 hash from block header */
+class BlockHashCalculator {
+ 
+public:
+ 
+    static uint256 CalculateBlockHashFromHeader_sha512_256(const CBlockHeader& header) {
+        std::stringstream ss;
+        ::Serialize(ss, header);
+        std::string rawByteStr = ss.str();
+        // Double sha512/256 of the blockheader
+        std::string sha512_256dHash = sha512_256(boost::algorithm::unhex(sha512_256(rawByteStr)));
+        std::string sha512_256dHashHex = boost::algorithm::unhex(sha512_256dHash);
+        std::string reversed = std::string(sha512_256dHashHex.rbegin(), sha512_256dHashHex.rend());
+        uint256 blockhash = uint256S(boost::algorithm::hex(reversed));
+        if (ENABLE_SHA512_256_HEADER_DEBUG) {
+            std::cerr << "Checking Blockheader: " << boost::algorithm::hex(rawByteStr) << std::endl; 
+            std::cerr << "Checking Blockhash Hex: " << blockhash.GetHex() << std::endl;
+        }
+        return blockhash;
+    }
+
 };
 
 #endif // DIGIBYTE_PRIMITIVES_BLOCK_H
