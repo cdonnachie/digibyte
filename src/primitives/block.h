@@ -8,7 +8,6 @@
 #define DIGIBYTE_PRIMITIVES_BLOCK_H
 
 #include <primitives/transaction.h>
-#include <primitives/blockhash.h>
 #include <serialize.h>
 #include <uint256.h>
 
