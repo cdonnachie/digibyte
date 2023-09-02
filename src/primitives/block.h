@@ -10,6 +10,8 @@
 #include <primitives/transaction.h>
 #include <serialize.h>
 #include <uint256.h>
+#include <boost/algorithm/hex.hpp>
+#include <iostream>
 
 namespace Consensus { struct Params; }
 
