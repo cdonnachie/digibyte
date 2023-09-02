@@ -130,6 +130,8 @@ std::string GetAlgoName(int Algo)
             //return std::string("equihash");
         //case ALGO_ETHASH:
             //return std::string("ethash");
+        case ALGO_SHA512_256D:
+            return std::string("sha512_256d");
         case ALGO_ODO:
             return std::string("odo");
     }
@@ -153,6 +155,8 @@ int GetAlgoByName(std::string strAlgo, int fallback)
         //return ALGO_EQUIHASH;
     //else if (strAlgo == "ethash")
         //return ALGO_ETHASH;
+    else if (strAlgo == "sha512_256d")
+        return ALGO_SHA512_256D;
     else if (strAlgo == "odo" || strAlgo == "odosha3")
         return ALGO_ODO;
     else

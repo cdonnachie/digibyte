@@ -68,6 +68,8 @@ inline int GetVersionForAlgo(int algo)
             //return BLOCK_VERSION_EQUIHASH;
         //case ALGO_ETHASH:
             //return BLOCK_VERSION_ETHASH;
+        case ALGO_SHA512_256D:
+            return BLOCK_VERSION_SHA512_256D;
         case ALGO_ODO:
             return BLOCK_VERSION_ODO;
         default:
